@@ -103,3 +103,17 @@ LR continues begin the better model, because:
 - It has the lowest standard deviation across validation folds making its predictions the most reliable;
 - It outperforms RF on validation accuracy because RF overfits the training set (gap of 8.3%);
 - Matches DT but with less variance and tigher generalization gap.
+
+## Week 5 - Hyperparameter Tuning
+
+| Model | Default: CV mean ± std | Tuned: nested CV mean ± std | Tuning score (best trial) | Optimism | Chosen hyperparameters |
+| DT | 0.675 ± 0.018 | 0.672 ± 0.017 | 0.679 | +0.002 | max_depth: 6, min_samples_leaf: 101, criterion: gini |
+| LR | 0.672 ± 0.013 | N/A (tuning off) | N/A | N/A | max_iter: 2000 (default) |
+| RF | 0.650 ± 0.018 | 0.681 ± 0.015 | 0.683 | +0.000 | max_depth: 29, min_samples_leaf: 63, max_features: sqrt |
+
+# Analysis
+
+- Model gains and standard deviation: Random forest gained from tuning, jumping from a default validation score of 0.650 up to 0.681, a gain of +0.031, which exceeds its fold-to-fold validation standard deviation (std= 0.015). In contrast, decision tree showed no significant gain, scoring 0.675 by default and 0.672 after nested CV tuning.
+- Impact on model ranking: Before tuning, default random forest lagged behind both logistic regression (0.672) and decision tree (0.675) due to unoptimized defaults. After tuning, random forest edged past them to become the top-performing model with an honest nested CV score of 0.681.
+    - Why: A single decision tree is prone to high variance and easily overfits training noise. By averaging the predictions of 300 individual trees, random forest dramatically reduces prediction variance while maintaining low bias, creating a much more robust decision boundary. Tuning via Optuna identified optimal parameters (max_depth: 29, min_samples_leaf: 63, max_features: 'sqrt') that prevented individual trees from memorizing noise.
+- Reporting metrics: For the best model (Random Forest), we should report the honest nested CV validation score of 0.681 ± 0.015 rather than the optimistic best-trial tuning score (0.683). Nested cross-validation is very important because it prevents selection bias and it ensures that the performance estimate is unbiased and generalizable to unseen data.   

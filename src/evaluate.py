@@ -5,6 +5,16 @@ from sklearn.metrics import classification_report
 from sklearn.model_selection import cross_validate
 
 def cross_validate_pipeline(pipeline, X, y, cv, scoring: str = "accuracy", n_jobs: int = 1):
+    """
+    Fits a fresh copy of `pipeline` (preprocessing included) on each fold's training part and
+    scores it on that fold's validation part.
+
+    Returns (fold_scores, y_oof):
+      - fold_scores: one row per fold with the train score, the validation score and their gap;
+      - y_oof: out-of-fold predictions, each row predicted by the fold model that did not
+        train on it, taken from the same fits as the scores. `cv` must be a partition
+        (each row validated exactly once).
+    """
     scores = cross_validate(pipeline, X, y, cv=cv, scoring=scoring, return_train_score=True,
                             return_estimator=True, return_indices=True, n_jobs=n_jobs)
     fold_scores = pd.DataFrame({
@@ -20,6 +30,7 @@ def cross_validate_pipeline(pipeline, X, y, cv, scoring: str = "accuracy", n_job
     return fold_scores, y_oof
 
 def cv_report(fold_scores: pd.DataFrame, scoring: str = "accuracy") -> str:
+    """Per-fold table with mean and std, as text (printed and returned)."""
     lines = [
         f"Cross-validation ({len(fold_scores)} stratified folds, metric: {scoring})",
         "",

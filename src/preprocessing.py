@@ -76,6 +76,18 @@ def add_missingness_indicators(df: pd.DataFrame, mnar_indicator_sources: list) -
             out[f"{col}_was_missing"] = out[col].isna().astype(int)
     return out
 
+def add_engineered_features(df: pd.DataFrame) -> pd.DataFrame:
+    out = df.copy()
+    # 1. Priors per adult year
+    out["priors_per_adult_year"] = out["priors_count"] / (out["age"] - 17).clip(lower=1)   # NaN stays NaN -> imputed later
+    # 2. High-risk young adult flag
+    out["is_young_with_priors"] = ((out["age"] <= 25) & (out["priors_count"] > 0)).astype(int)
+    # 3. Binned priors category (fixed domain thresholds)
+    bins = [-1, 0, 2, 5, np.inf]
+    labels = ["0", "1-2", "3-5", "6+"]
+    out["priors_cat"] = pd.cut(out["priors_count"], bins=bins, labels=labels).astype(str)
+    return out
+
 def split_features_target(df: pd.DataFrame, data_config: dict, mnar_indicator_sources: list):
     target = data_config["target"]
     sensitive_attr = data_config["sensitive_attr"]

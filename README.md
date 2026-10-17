@@ -92,6 +92,7 @@ Also, precision, recall and FPR also got slightly better which shows ...
 # Models performance comparison this week
 
 | Modelo | Mean train acc | Mean val acc | Overfit gap | F1 (0/1) | Std Val|
+| :--- | :--- | :--- | :--- | :--- | :--- |
 | Dummy | 54.9% | 54.9%  | 0.0%  | 0.71/0.00 | 0% |
 | LR | 67.5% | 67.2% | 0.3% | 0.73/0.58 | 1.3% |
 | DT | 68.5% | 67.5% | 1.1% | 0.73/0.60 | 1.8% |
@@ -107,6 +108,7 @@ LR continues begin the better model, because:
 ### Week 5 - Hyperparameter Tuning
 
 | Model | Default: CV mean ± std | Tuned: nested CV mean ± std | Tuning score (best trial) | Optimism | Chosen hyperparameters |
+| :--- | :--- | :--- | :--- | :--- | :--- |
 | DT | 0.675 ± 0.018 | 0.672 ± 0.017 | 0.679 | +0.002 | max_depth: 6, min_samples_leaf: 101, criterion: gini |
 | LR | 0.672 ± 0.013 | N/A (tuning off) | N/A | N/A | max_iter: 2000 (default) |
 | RF | 0.650 ± 0.018 | 0.681 ± 0.015 | 0.683 | +0.000 | max_depth: 29, min_samples_leaf: 63, max_features: sqrt |
@@ -147,6 +149,7 @@ Enconding: Ordinal. Since prior categories represent a strict ranking of risk (0
 ## Model comparison (with new features):
 
 | Model | Default: CV mean ± std | Tuned: nested CV mean ± std | Tuning score (best trial) | Optimism | Chosen hyperparameters |
+| :--- | :--- | :--- | :--- | :--- | :--- |
 | DT | 0.671 ± 0.011 | 0.668 ± 0.014 | 0.674 | +0.006 | max_depth: 4, min_samples_leaf: 1, criterion: gini |
 | LR | 0.676 ± 0.016 | 0.674 ± 0.014 | 0.678 | +0.002 | C: 47.072 |
 | RF | 0.646 ± 0.017 | 0.676 ± 0.009 | 0.678 | +0.003 | n_estimators: 127, max_depth: 20, min_samples_leaf: 23, max_features: sqrt |
@@ -156,6 +159,7 @@ Enconding: Ordinal. Since prior categories represent a strict ranking of risk (0
 # Without new features:
 
 | Model | Default: CV mean ± std | Tuned: nested CV mean ± std | Tuning score (best trial) | Optimism | Chosen hyperparameters |
+| :--- | :--- | :--- | :--- | :--- | :--- |
 | ORF | 0.647 ± 0.011 | 0.679 ± 0.013 | 0.683 | +0.003 | tree__max_depth: 6, tree__min_samples_leaf: 3, project__n_components: 5 |
 | AB | 0.676 ± 0.012 | 0.682 ± 0.017 | 0.684 | -0.000 | estimator__max_depth: 4, n_estimators: 220, learning_rate: 0.025 |
 

@@ -24,7 +24,11 @@
 | Week | Practical class focus | Added to the pipeline |
 |------|------------------------|------------------------|
 | 2 | Introduction & baseline pipeline | Initial version: project structure, a single naive train/test split (no cross-validation), minimal preprocessing (drop rows with missing values, one-hot encode categoricals), logistic regression baseline, a first (deliberately simple) fairness check comparing our model's and COMPAS's own false-positive rate by race, train-vs-test accuracy reporting (to start spotting overfitting), and each run's full report saved automatically to `results/` |
-
+| 3 | EDA + preprocessing | Added data diagnostics (`src/data_diagnostics.py`) for missingness and duplicates, a robust preprocessing pipeline (`src/preprocessing.py`) with mechanism-matched imputation, target encoding, standard scaling, and dropping redundant features |
+| 4 | Preprocessing inside pipeline + cross-validation | Locked final test set (20%), stratified 5-fold cross-validation across the whole pipeline, out-of-fold predictions for classification reports, and added the majority-class Dummy model as a floor. |
+| 5 | Hyperparameter tuning without leakage | Integrated Optuna (`src/tuning.py`) for hyperparameter optimization using nested cross-validation on the development set to prevent data leakage and optimism bias. |
+| 6 | Ensembles in depth | Added advanced model types (`oblique_random_forest`, `adaboost`), configured search spaces in `config.yaml`, and implemented Nadeau & Bengio's corrected paired t-test for statistical model comparison. |
+| 7 | Gradient boosting + evaluating with probabilities | Added Gradient Boosting, Hist Gradient Boosting, and Naive Bayes; expanded metrics (ROC-AUC selection metric, PR-AUC, F-beta, etc.) using out-of-fold probabilities; and automated run logging to `results/runs.csv`. |
 
 ## 1st commit task
 
@@ -178,3 +182,38 @@ Enconding: Ordinal. Since prior categories represent a strict ranking of risk (0
     - Across all models, the False Positive Rate (FPR) for African-American defendants remains higher (approx. 0.27 - 0.29) compared to Caucasian defendants (approx. 0.14 - 0.16). However, all machine learning models tested here significantly improved upon COMPAS's proprietary score, which originally carried an African-American FPR of 0.45.
 
 The new best model is Adaboost (without / with new features) with a nested CV validation score of 0.682
+
+### Week 7 - Boosting and Metrics
+
+# Scoreboard
+
+| run | model | tuned | encoder | scaler | roc_auc | std | untuned | floor |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 20261031_211726 | adaboost | True | target | robust | 0.727 | 0.013 | 0.722 | 0.500 |
+| 20261031_212939 | gradient_boosting | True | target | robust | 0.727 | 0.013 | 0.667 | 0.500 |
+| 20261031_210432 | random_forest | True | target | robust | 0.726 | 0.015 | 0.689 | 0.500 |
+| 20261031_211247 | oblique_random_forest | True | target | robust | 0.726 | 0.012 | 0.687 | 0.500 |
+| 20261031_212529 | hist_gradient_boosting | True | target | robust | 0.726 | 0.014 | 0.715 | 0.500 |
+| 20261031_210219 | logistic_regression | False | target | robust | 0.725 | 0.013 | 0.725 | 0.500 |
+| 20261031_205918 | logistic_regression | True | target | robust | 0.723 | 0.011 | 0.725 | 0.500 |
+| 20261031_212421 | adaboost | False | target | robust | 0.722 | 0.015 | 0.722 | 0.500 |
+| 20261031_205738 | decision_tree | True | target | robust | 0.715 | 0.010 | 0.601 | 0.500 |
+| 20261031_212832 | hist_gradient_boosting | False | target | robust | 0.715 | 0.017 | 0.715 | 0.500 |
+| 20261031_211020 | naive_bayes | False | target | robust | 0.706 | 0.013 | 0.706 | 0.500 |
+| 20261031_210828 | random_forest | False | target | robust | 0.689 | 0.018 | 0.689 | 0.500 |
+| 20261031_211605 | oblique_random_forest | False | target | robust | 0.687 | 0.017 | 0.687 | 0.500 |
+| 20261031_213357 | gradient_boosting | False | target | robust | 0.667 | 0.019 | 0.667 | 0.500 |
+| 20261031_205840 | decision_tree | False | target | robust | 0.601 | 0.017 | 0.601 | 0.500 |
+| 20261031_210934 | dummy | False | target | robust | 0.500 | 0.000 | 0.500 | 0.500 |
+
+# Analysis
+
+- AdaBoost (tuned) and Gradient Boosting (tuned) lead the scoreboard both with 0.727 ± 0.013.
+- The biggest winners from tuning are: gradient boosting, with a jump from 0.667 to 0.727, showing that hyperparameter tuning was essential here; decision tree, with a jumpr from 0.601 to 0.715; random forest and oblique random forest, from ~0.687–0.689 up to ~0.726.
+- Every single model comfortably outperforms the dummy classifier floor (0.500).
+
+# Selection metric
+
+ROC-AUC was selected since it's one of the new metrics we learned about and because, unlike accuracy or F1, it evaluates ranking capability across all decision thresholds without relying on a fixed standard 0.5 classification threshold, which is important for balanced probability outputs. This metric also ensures the hyperparameter tuning optimizes the true ranking quality of predicted probabilities rather than arbitrary hard labels.
+
+The fbeta score could also be an interesting metric to explore since it allows to tune the balance between Precision and Recall. By placing beta > 1, we place a higher weight on Recall, ensuring we capture as many actual re-offenders as possible, which aligns with public safety piorities.

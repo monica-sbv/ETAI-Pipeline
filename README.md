@@ -29,8 +29,6 @@
 | 5 | Hyperparameter tuning without leakage | Integrated Optuna (`src/tuning.py`) for hyperparameter optimization using nested cross-validation on the development set to prevent data leakage and optimism bias. |
 | 6 | Ensembles in depth | Added advanced model types (`oblique_random_forest`, `adaboost`), configured search spaces in `config.yaml`, and implemented Nadeau & Bengio's corrected paired t-test for statistical model comparison. |
 | 7 | Gradient boosting + evaluating with probabilities | Added Gradient Boosting, Hist Gradient Boosting, and Naive Bayes; expanded metrics (ROC-AUC selection metric, PR-AUC, F-beta, etc.) using out-of-fold probabilities; and automated run logging to `results/runs.csv`. |
-| Week | Milestone / Focus | Model / Technique | ROC-AUC | Key Takeaway |
-| :--- | :--- | :--- | :--- | :--- |
 | 8 | Feature Selection & Corrected Resampling | Added model type `XGBoost`. feature selection as a learned step of the Pipeline: new VoteSelector class. |
 
 ## 1st commit task

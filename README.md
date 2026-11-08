@@ -29,6 +29,9 @@
 | 5 | Hyperparameter tuning without leakage | Integrated Optuna (`src/tuning.py`) for hyperparameter optimization using nested cross-validation on the development set to prevent data leakage and optimism bias. |
 | 6 | Ensembles in depth | Added advanced model types (`oblique_random_forest`, `adaboost`), configured search spaces in `config.yaml`, and implemented Nadeau & Bengio's corrected paired t-test for statistical model comparison. |
 | 7 | Gradient boosting + evaluating with probabilities | Added Gradient Boosting, Hist Gradient Boosting, and Naive Bayes; expanded metrics (ROC-AUC selection metric, PR-AUC, F-beta, etc.) using out-of-fold probabilities; and automated run logging to `results/runs.csv`. |
+| Week | Milestone / Focus | Model / Technique | ROC-AUC | Key Takeaway |
+| :--- | :--- | :--- | :--- | :--- |
+| 8 | Feature Selection & Corrected Resampling | Added model type `XGBoost`. feature selection as a learned step of the Pipeline: new VoteSelector class. |
 
 ## 1st commit task
 
@@ -217,3 +220,19 @@ The new best model is Adaboost (without / with new features) with a nested CV va
 ROC-AUC was selected since it's one of the new metrics we learned about and because, unlike accuracy or F1, it evaluates ranking capability across all decision thresholds without relying on a fixed standard 0.5 classification threshold, which is important for balanced probability outputs. This metric also ensures the hyperparameter tuning optimizes the true ranking quality of predicted probabilities rather than arbitrary hard labels.
 
 The fbeta score could also be an interesting metric to explore since it allows to tune the balance between Precision and Recall. By placing beta > 1, we place a higher weight on Recall, ensuring we capture as many actual re-offenders as possible, which aligns with public safety piorities.
+
+### Week 8 - Feature Selection
+
+**Slightly late due to family issues**
+
+| Feature Selection | ROC-AUC | Takeaway |
+| :--- | :--- | :--- |
+| True | 0.720 | Smaller model (3 features) performs statistically equivalently to the full model, improving efficiency. |
+| False | 0.723 | Full model using all 13 features. |
+
+Corrected Pair Test:
+| Mean difference | Wins | t | p-value |
+| :--- | :--- | :--- | :--- |
+| -0.0036 | 2/5 | -0.6158 | 0.5713|
+
+Evaluating XGBoost with feature selection enabled yielded a mean ROC-AUC of 0.720 (retaining just 3 features: age, priors_count, and priors_per_adult_year), compared to 0.723 when using all features. A corrected paired t-test between the two configurations showed no statistically significant difference (t = -0.616, p = 0.571). Because the much smaller model performs just as well without sacrificing predictive power, we should keep feature selection enabled to reduce complexity, prevent overfitting, and improve interpretability.

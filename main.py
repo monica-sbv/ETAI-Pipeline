@@ -49,6 +49,12 @@ def main():
         random_state=config["test_set"]["random_state"],
     )
 
+    # Map text target labels to integers for multi-class
+    if config["data"]["target"] == "score_text":
+        target_mapping = {"Low": 0, "Medium": 1, "High": 2}
+        y_dev = y_dev.map(target_mapping)
+        y_test = y_test.map(target_mapping)
+
     pipeline = build_pipeline(config["preprocessing"], config["model"])
 
     cv_config = config["cv"]

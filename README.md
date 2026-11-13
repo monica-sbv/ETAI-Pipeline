@@ -53,9 +53,9 @@ This means that the Logistic Regression has a slightly higher test accuracy and 
 0.67 of teste accuracy means the model got 67 out of 100 test examples correct.
 
 
-### Week 3 - EDA_cleaning
+# Week 3 - EDA_cleaning
 
-# Accuracy comparison
+### Accuracy comparison
 
 | Modelo | Estado do Data | Train Accuracy | Test Accuracy |
 | :--- | :--- | :--- | :--- |
@@ -72,9 +72,9 @@ Comparação de modelos:
 
 -O melhor modelo continua a ser o Logistic Regression com 65.5% de test accuracy e decisio tree com 64.2%. O gap entre treino e teste na Logistic Regression é +0.023, enquanto na Decision Tree é de +0.049. Comparando com os valores da semana passada, estes valores não demonstram que os modelos passaram de ter um problema de overfitting mas que os conjuntos de treino e teste são agora um pouco mais independentes. Apesar de os valores terem subido, os valores atuais são bons e indicam modelo estável (abaixo de 5%). Por isso, na semana passada havia uma falsa sensação de estabilidade e agora foi possível eliminar algum vício dos dados.
 
-### Week 4 - Preprocessing and Cross Validation
+# Week 4 - Preprocessing and Cross Validation
 
-# LR last week VS. LR this week
+### LR last week VS. LR this week
 
 **Last Week (Single split on cleaned data):**
 
@@ -94,7 +94,7 @@ The performance on training data remains virtually identical, but the single tes
 
 Also, precision, recall and FPR also got slightly better which shows ...
 
-# Models performance comparison this week
+### Models performance comparison this week
 
 | Modelo | Mean train acc | Mean val acc | Overfit gap | F1 (0/1) | Std Val|
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -110,7 +110,7 @@ LR continues begin the better model, because:
 - It outperforms RF on validation accuracy because RF overfits the training set (gap of 8.3%);
 - Matches DT but with less variance and tigher generalization gap.
 
-### Week 5 - Hyperparameter Tuning
+# Week 5 - Hyperparameter Tuning
 
 | Model | Default: CV mean ± std | Tuned: nested CV mean ± std | Tuning score (best trial) | Optimism | Chosen hyperparameters |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -118,7 +118,7 @@ LR continues begin the better model, because:
 | LR | 0.672 ± 0.013 | N/A (tuning off) | N/A | N/A | max_iter: 2000 (default) |
 | RF | 0.650 ± 0.018 | 0.681 ± 0.015 | 0.683 | +0.000 | max_depth: 29, min_samples_leaf: 63, max_features: sqrt |
 
-# Analysis
+### Analysis
 
 - Model gains and standard deviation: Random forest gained from tuning, jumping from a default validation score of 0.650 up to 0.681, a gain of +0.031, which exceeds its fold-to-fold validation standard deviation (std= 0.015). In contrast, decision tree showed no significant gain, scoring 0.675 by default and 0.672 after nested CV tuning.
 - Impact on model ranking: Before tuning, default random forest lagged behind both logistic regression (0.672) and decision tree (0.675) due to unoptimized defaults. After tuning, random forest edged past them to become the top-performing model with an honest nested CV score of 0.681.
@@ -126,7 +126,7 @@ LR continues begin the better model, because:
 - Reporting metrics: For the best model (Random Forest), we should report the honest nested CV validation score of 0.681 ± 0.015 rather than the optimistic best-trial tuning score (0.683). Nested cross-validation is very important because it prevents selection bias and it ensures that the performance estimate is unbiased and generalizable to unseen data.   
 
 
-### Week 6 - Ensembles and Feature Engineering
+# Week 6 - Ensembles and Feature Engineering
 
 ## Updates based on challenges from previous week
 
@@ -161,7 +161,7 @@ Enconding: Ordinal. Since prior categories represent a strict ranking of risk (0
 | ORF | 0.650 ± 0.019 | 0.675 ± 0.013 | 0.680 | +0.004 | max_depth: 28, min_samples_leaf: 27, n_components: 5 |
 | AB | 0.674 ± 0.009 | 0.677 ± 0.013 | 0.680 | +0.001 | estimator__max_depth: 4, n_estimators: 220, learning_rate: 0.025 |
 
-# Without new features:
+### Without new features:
 
 | Model | Default: CV mean ± std | Tuned: nested CV mean ± std | Tuning score (best trial) | Optimism | Chosen hyperparameters |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -184,9 +184,9 @@ Enconding: Ordinal. Since prior categories represent a strict ranking of risk (0
 
 The new best model is Adaboost (without / with new features) with a nested CV validation score of 0.682
 
-### Week 7 - Boosting and Metrics
+# Week 7 - Boosting and Metrics
 
-# Scoreboard
+### Scoreboard
 
 | run | model | tuned | encoder | scaler | roc_auc | std | untuned | floor |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -207,19 +207,19 @@ The new best model is Adaboost (without / with new features) with a nested CV va
 | 20261031_205840 | decision_tree | False | target | robust | 0.601 | 0.017 | 0.601 | 0.500 |
 | 20261031_210934 | dummy | False | target | robust | 0.500 | 0.000 | 0.500 | 0.500 |
 
-# Analysis
+### Analysis
 
 - AdaBoost (tuned) and Gradient Boosting (tuned) lead the scoreboard both with 0.727 ± 0.013.
 - The biggest winners from tuning are: gradient boosting, with a jump from 0.667 to 0.727, showing that hyperparameter tuning was essential here; decision tree, with a jumpr from 0.601 to 0.715; random forest and oblique random forest, from ~0.687–0.689 up to ~0.726.
 - Every single model comfortably outperforms the dummy classifier floor (0.500).
 
-# Selection metric
+### Selection metric
 
 ROC-AUC was selected since it's one of the new metrics we learned about and because, unlike accuracy or F1, it evaluates ranking capability across all decision thresholds without relying on a fixed standard 0.5 classification threshold, which is important for balanced probability outputs. This metric also ensures the hyperparameter tuning optimizes the true ranking quality of predicted probabilities rather than arbitrary hard labels.
 
 The fbeta score could also be an interesting metric to explore since it allows to tune the balance between Precision and Recall. By placing beta > 1, we place a higher weight on Recall, ensuring we capture as many actual re-offenders as possible, which aligns with public safety piorities.
 
-### Week 8 - Feature Selection
+# Week 8 - Feature Selection
 
 | Feature Selection | ROC-AUC | Takeaway |
 | :--- | :--- | :--- |
@@ -238,3 +238,12 @@ Evaluating XGBoost with feature selection enabled yielded a mean ROC-AUC of 0.72
 Changes:
 - new config_multiclass.yaml where: target is 'score_text', appropriate metrics, from target encoder to ordinal encoder, new output directory
 - main takes a config path as an argument, with config.yaml as default
+
+| What broke | Why | How I changed it | Where |
+| :--- | :--- | :--- | :--- |
+| cross_validate_pipeline | score_text contains text strings (Low, Medium and High) | mapped the text strings to integers. | main.py after split_dev_test |
+| cross_validate_pipeline | assumes binary classification and hardcodes [:,1] to grab a single probability column | it now captures the full 2D probability matrix (3 probabilities per row summing to 1) | evaluate.py |
+| oof_classification_report and confusion matrix | hardcoded for 2 classes (expects a 2x2 grid) when now we have 3 | picks the highest probability for each row if we have 3 classes and created dynamics labels for the confusion matrix | evaluate.py |
+|  fairness_report | in a 3-class setting, "positive" isn't just a single binary choice anymore. original code treated anything Medium/High as positive | treated "High" as the flagged condition when there's 3 classes| evaluate.py
+
+

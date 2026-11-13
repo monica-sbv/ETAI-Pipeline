@@ -55,7 +55,7 @@ diagnostics:
 
 preprocessing:
   # options: "onehot" | "ordinal" | "count" | "target"
-  encoder: "ordinal" 
+  encoder: "onehot" 
   # options: "none" | "standard" | "minmax" | "robust"
   scaler: "robust"
 

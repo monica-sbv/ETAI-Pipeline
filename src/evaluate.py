@@ -26,10 +26,17 @@ def cross_validate_pipeline(pipeline, X, y, cv, scorers: str, selection_metric: 
 
     for name in scorers:
         fold_scores[name] = scores[f"test_{name}"]
-    
-    oof_proba = np.empty(len(X))
-    for model, val_idx in zip(scores["estimator"], scores["indices"]["test"]):
-        oof_proba[val_idx] = model.predict_proba(X.iloc[val_idx])[:, 1]
+
+    dummy_preds = scores["estimator"][0].predict_proba(X.iloc[[0]])
+    n_classes = dummy_preds.shape[1]
+    if n_classes > 2:
+        oof_proba = np.empty((len(X), n_classes))
+        for model, val_idx in zip(scores["estimator"], scores["indices"]["test"]):
+            oof_proba[val_idx] = model.predict_proba(X.iloc[val_idx])
+    else:
+        oof_proba = np.empty(len(X))
+        for model, val_idx in zip(scores["estimator"], scores["indices"]["test"]):
+            oof_proba[val_idx] = model.predict_proba(X.iloc[val_idx])[:, 1]
     return fold_scores, oof_proba
 
 def cv_report(fold_scores: pd.DataFrame, metrics: list, selection_metric: str, title: str) -> str:
@@ -63,10 +70,20 @@ def corrected_paired_test(scores_a, scores_b, test_train_ratio: float) -> dict:
 
 def oof_classification_report(y_true, oof_proba, threshold: float = 0.5) -> str:
     """Confusion matrix and classification report of the out-of-fold predictions, as text."""
-    y_pred = (oof_proba >= threshold).astype(int)
+    # It now handles multiclass argmax prediction vs binary thresholding
+    if oof_proba.ndim > 1 and oof_proba.shape[1] > 2: # if it's a matrix and has more than 2 classes
+        y_pred = np.argmax(oof_proba, axis=1) # picks the class index with the highest probability across the columns for each row.
+    else:
+        probs = oof_proba[:,1] if oof_proba.ndim > 1 else oof_proba
+        y_pred = (probs >= threshold).astype(int) # extracts the positive class column and applies the cutoff threshold (>= 0.5) to generate 0 or 1 predictions.
 
-    cm = pd.DataFrame(confusion_matrix(y_true, y_pred), index=["true 0", "true 1"],
-                          columns=["predicted 0", "predicted 1"])
+    # personalized labels based on unique classes found
+    n_classes = len(np.unique(y_true))
+    class_labels = [f"true {i}" for i in range(n_classes)]
+    pred_labels = [f"predicted {i}" for i in range(n_classes)]
+    # creates matching text labels for rows (true 0, true 1, true 2) and columns (predicted 0, etc.) regardless of whether it's 2 or 3 classes.
+
+    cm = pd.DataFrame(confusion_matrix(y_true, y_pred), index=class_labels, columns=pred_labels)
     return (f"Out-of-fold predictions, development set (threshold {threshold}):\n\n"
             f"{cm.to_string()}\n\n{classification_report(y_true, y_pred, zero_division=0)}")
 
@@ -81,8 +98,27 @@ def fairness_report(y_true, oof_proba, extras: pd.DataFrame, sensitive_attr: str
     df = extras.copy()
     df[sensitive_attr] = df[sensitive_attr].astype(object).fillna("unknown")
     df["y_true"] = pd.Series(y_true).values
-    df["y_pred_model"] = (oof_proba >= threshold).astype(int)
-    df["y_pred_compas"] = (df["score_text"] != "Low").astype(int)
+
+    # handle model predictions (binary vs multiclass)
+    if oof_proba.ndim > 1 and oof_proba.shape[1] > 2:
+        df["y_pred_model"] = np.argmax(oof_proba, axis=1)
+    else:
+        probs = oof_proba[:, 1] if oof_proba.ndim > 1 else oof_proba
+        df["y_pred_model"] = (probs >= threshold).astype(int)
+
+    # handle COMPAS score (score_text)
+    # check if score_text is already mapped to int
+    if "score_text" in df.columns:
+        if df["score_text"].dtype == object or isinstance(df["score_text"].iloc[0], str):
+            # binary text check vs multiclass text check
+            if len(np.unique(y_true)) > 2:
+                # For 3 classes: define "High" (class 2) as positive or map text
+                df["y_pred_compas"] = (df["score_text"] == "High").astype(int)
+            else:
+                df["y_pred_compas"] = (df["score_text"] != "Low").astype(int)
+        else:
+            # If score_text is already numeric
+            df["y_pred_compas"] = (df["score_text"] == 2).astype(int) if len(np.unique(y_true)) > 2 else (df["score_text"] > 0).astype(int)
 
     lines = [
         f"False positive rate by {sensitive_attr} (development set, out-of-fold)",
@@ -93,10 +129,17 @@ def fairness_report(y_true, oof_proba, extras: pd.DataFrame, sensitive_attr: str
     for label, col in [("Our model", "y_pred_model"), ("COMPAS's own score", "y_pred_compas")]:
         lines.append(f"  {label}:")
         for group, g in df.groupby(sensitive_attr):
-            negatives = g[g["y_true"] == 0]
-            if len(negatives) == 0:
-                continue
-            fpr = (negatives[col] == 1).mean()
+            if len(np.unique(y_true)) > 2:    # 3 classes: Negatives = not truly High (y_true != 2), Flagged = predicted High (== 2)
+                negatives = g[g["y_true"] != 2]
+                if len(negatives) == 0:
+                    continue
+                fpr = (negatives[col] == 2).mean()
+            else:    # binary: negatives = didn't reoffend (y_true == 0), flagged = predicted positive (==1)
+                negatives = g[g["y_true"] == 0]
+                if len(negatives) == 0:
+                    continue
+                fpr = (negatives[col] == 1).mean()
+                
             lines.append(f"    {group:<20s} FPR = {fpr:.2f}  (n={len(negatives)})")
         lines.append("")
     return "\n".join(lines)

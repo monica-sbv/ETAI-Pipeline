@@ -221,8 +221,6 @@ The fbeta score could also be an interesting metric to explore since it allows t
 
 ### Week 8 - Feature Selection
 
-**Slightly late due to family issues**
-
 | Feature Selection | ROC-AUC | Takeaway |
 | :--- | :--- | :--- |
 | True | 0.720 | Smaller model (3 features) performs statistically equivalently to the full model, improving efficiency. |
@@ -234,3 +232,9 @@ Corrected Pair Test:
 | -0.0036 | 2/5 | -0.6158 | 0.5713|
 
 Evaluating XGBoost with feature selection enabled yielded a mean ROC-AUC of 0.720 (retaining just 3 features: age, priors_count, and priors_per_adult_year), compared to 0.723 when using all features. A corrected paired t-test between the two configurations showed no statistically significant difference (t = -0.616, p = 0.571). Because the much smaller model performs just as well without sacrificing predictive power, we should keep feature selection enabled to reduce complexity, prevent overfitting, and improve interpretability.
+
+# Week 9 - Option B: New kind of target: 3 classes
+
+Changes:
+- new config_multiclass.yaml where: target is 'score_text', appropriate metrics, from target encoder to ordinal encoder, new output directory
+- main takes a config path as an argument, with config.yaml as default

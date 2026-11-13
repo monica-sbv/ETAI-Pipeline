@@ -1,14 +1,11 @@
 """
-Entry point for the baseline predictive pipeline.
-
 Run with:
     python main.py
 
-This orchestrates the full (deliberately simple) pipeline:
-    load config -> load data -> preprocess -> split -> train
-    -> evaluate (train & test) -> save results
+This orchestrates the full pipeline:
 """
 import yaml
+import sys
 import optuna
 
 from datetime import datetime
@@ -23,14 +20,16 @@ from src.evaluate import build_scorers, cross_validate_pipeline, cv_report, oof_
 from src.tuning import tune_pipeline, nested_cross_validate, tuning_report
 from src.results import save_run, save_scores
 
+config_path = sys.argv[1] if len(sys.argv) > 1 else "config.yaml"
+print(f"Using configuration file: {config_path}")
 
-def load_config(path: str = "config.yaml") -> dict:
+def load_config(path: str) -> dict:
     with open(path, "r") as f:
         return yaml.safe_load(f)
 
 
 def main():
-    config = load_config()
+    config = load_config(config_path)
     run = datetime.now().strftime("%Y%m%d_%H%M%S")
     model_type = config["model"]["type"]
 

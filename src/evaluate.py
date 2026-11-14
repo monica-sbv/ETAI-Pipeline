@@ -127,6 +127,8 @@ def fairness_report(y_true, oof_proba, extras: pd.DataFrame, sensitive_attr: str
     ]
 
     for label, col in [("Our model", "y_pred_model"), ("COMPAS's own score", "y_pred_compas")]:
+        if col not in df.columns:
+            continue
         lines.append(f"  {label}:")
         for group, g in df.groupby(sensitive_attr):
             if len(np.unique(y_true)) > 2:    # 3 classes: Negatives = not truly High (y_true != 2), Flagged = predicted High (== 2)

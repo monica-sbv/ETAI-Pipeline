@@ -75,10 +75,13 @@ class VoteSelector(SelectorMixin, BaseEstimator):
     def fit(self, X, y):
         forest = RandomForestClassifier(n_estimators=200, min_samples_leaf=20, random_state=self.random_state, n_jobs=-1).fit(X, y)
         booster = GradientBoostingClassifier(random_state=self.random_state).fit(X, y)
-        lasso = LogisticRegression(l1_ratio=1.0, C=0.01, solver="liblinear").fit(X, y)
+        lasso = LogisticRegression(l1_ratio=1.0, C=0.01, solver="saga").fit(X, y) # saga is a solver that handles L1 penalties across both binary and multi-class settings.
         self.votes_ = ((forest.feature_importances_ > forest.feature_importances_.mean()).astype(int)
                        + (booster.feature_importances_ > booster.feature_importances_.mean())
-                       + (np.abs(lasso.coef_[0]) > 1e-8))
+                       + (np.abs(lasso.coef_).max(axis=0) > 1e-8))
+        # taking out the [0] so that it takes the abslute value of coeff across ALL class rows.
+        # .max(axis=0) to find the maximum effect size for each feature across all classes.
+        # so, if a feature has a non-zero coeff for any class, it counts as selected.
         self.support_ = self.votes_ >= self.min_votes
         return self
 

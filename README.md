@@ -235,8 +235,14 @@ Evaluating XGBoost with feature selection enabled yielded a mean ROC-AUC of 0.72
 
 # Week 9 - Option B: New kind of target: 3 classes
 
-Changes:
-- new config_multiclass.yaml where: target is 'score_text', appropriate metrics, from target encoder to ordinal encoder, new output directory
+#### How to run new config:
+
+In the terminal, write:
+
+`python main.py config_multiclass.yaml`
+
+### Changes:
+- new config_multiclass.yaml where: target is 'score_text', added/deleted/changed the appropriate metrics, from target encoder to ordinal encoder, new output directory
 - main takes a config path as an argument, with config.yaml as default
 
 | What broke | Why | How I changed it | Where |
@@ -244,6 +250,6 @@ Changes:
 | cross_validate_pipeline | score_text contains text strings (Low, Medium and High) | mapped the text strings to integers. | main.py after split_dev_test |
 | cross_validate_pipeline | assumes binary classification and hardcodes [:,1] to grab a single probability column | it now captures the full 2D probability matrix (3 probabilities per row summing to 1) | evaluate.py |
 | oof_classification_report and confusion matrix | hardcoded for 2 classes (expects a 2x2 grid) when now we have 3 | picks the highest probability for each row if we have 3 classes and created dynamics labels for the confusion matrix | evaluate.py |
-|  fairness_report | in a 3-class setting, "positive" isn't just a single binary choice anymore. original code treated anything Medium/High as positive | treated "High" as the flagged condition when there's 3 classes| evaluate.py
-
-
+|  fairness_report | in a 3-class setting, "positive" isn't just a single binary choice anymore. original code treated anything Medium/High as positive | treated "High" as the flagged condition when there's 3 classes | evaluate.py |
+| VoteSelector | in a binary setting, lasso.coef_ gives a 1D array of coeff for all features. in a 3-class setting, logistic regression uses a one vs rest approach, meaning lasso.coef_ has a shape (n_classes, n_features), so lasso.coef_[0] would only grab the coeff for class 0, instead of checking across all classes. the original solver of lasso (liblinear) only worked for binary settings | now, in a 3-class setting, a feature is selected by lasso if it's non-zero for at least one class, by taking the maximum absolute coeff across all rows. switched the solver of lasso to 'saga' | model.py |
+| nested_cross_validate | [:,1] is hardcoded, assuming a binary probability output | just like the other probability changes, now the fucntion checks whether the model outputs binary or multi-class probabilities | tuning.py |

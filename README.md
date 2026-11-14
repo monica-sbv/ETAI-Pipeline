@@ -253,3 +253,22 @@ In the terminal, write:
 |  fairness_report | in a 3-class setting, "positive" isn't just a single binary choice anymore. original code treated anything Medium/High as positive | treated "High" as the flagged condition when there's 3 classes | evaluate.py |
 | VoteSelector | in a binary setting, lasso.coef_ gives a 1D array of coeff for all features. in a 3-class setting, logistic regression uses a one vs rest approach, meaning lasso.coef_ has a shape (n_classes, n_features), so lasso.coef_[0] would only grab the coeff for class 0, instead of checking across all classes. the original solver of lasso (liblinear) only worked for binary settings | now, in a 3-class setting, a feature is selected by lasso if it's non-zero for at least one class, by taking the maximum absolute coeff across all rows. switched the solver of lasso to 'saga' | model.py |
 | nested_cross_validate | [:,1] is hardcoded, assuming a binary probability output | just like the other probability changes, now the fucntion checks whether the model outputs binary or multi-class probabilities | tuning.py |
+
+### Reflection
+
+The hardest assumption to find was the binary shape constraint tucked inside nested_cross_validate and VoteSelector, which required generalizing matrix slicing and coefficient extraction. The hardest to figure out how to update was the fairness_report and the change from 'liblinear' to 'saga' on the lasso solver (had to research about the topic and which solvers worked for both binary and multi-class). Relaized halfway through that a lot of the changes I made were repeated across the updated functions. So maybe I could've done a fucntion/class to take out that redundancy or make that choice in the beginning of main like the config selection. Was able to get the same scores as last week with the default config after the updates!
+
+### Target Scores
+
+| Model | ROC_AUC_ovr | Accuracy | F1_macro | Past the target score (Y/N) | Comment |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| RF | 0.752 | 0.594 | 0.544 | Y,N,Y | Didn't go past the target scores by very little (not a very significant difference) |
+| ORF | 0.759 | 0.628 | 0.524 | Y,N,N | Didn't go past the target scores by very little (not a very significant difference) |
+| AB | 0.757 | 0.631 | 0.536 | Y,Y,Y | Every metric went past the target score |
+| GB | 0.760 | 0.633 | 0.538 | Y,Y,Y | Every metric went past the target score |
+| HGB | 0.752 | 0.593 | 0.545 | Y,N,Y | Didn't go past the target scores by very little (not a very significant difference) |
+| XGB | 0.760 | 0.626 | 0.509 | Y,N,N | Didn't go past the target scores by very little (not a very significant difference) |
+
+Out of the 2 runs that reach past all the target scores (AB and GB), GradientBoosting has the slightly better results. XGBoost also has the same winner score of 0.760 in ROC_AUC_ovr but its F1_macro is lower than the target.
+
+Within the 3-class COMPAS task, the "Medium" class is the hardest to predict since it's the class with the lowest f1-score, for every run, despite having more samples (support column) than class "High". This is because it sits in an ambiguous boundary zone between clear low and high recidivism risk, which often leads to higher confusion rates.
